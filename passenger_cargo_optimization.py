@@ -195,9 +195,27 @@ class PassengerCargoOptimizer:
         self.ai_engine = ai_engine or AICoordinationEngine()
         self.distance_matrix = self._calculate_distance_matrix()
         self.time_matrix = self._calculate_time_matrix()
+    
+    @staticmethod
+    def get_valid_routes(routes: List[Route]) -> List[Route]:
+        """
+        获取有效路线（过滤掉空路线）
+        
+        Args:
+            routes: 路线列表
+            
+        Returns:
+            有效路线列表
+        """
+        return [r for r in routes if r.nodes]
         
     def _calculate_distance_matrix(self) -> np.ndarray:
-        """计算节点间距离矩阵"""
+        """
+        计算节点间距离矩阵
+        
+        注意：当前使用简化的欧氏距离近似，适用于示例和小范围区域。
+        实际应用中应使用Haversine公式计算地理坐标间的真实距离。
+        """
         n = len(self.nodes)
         distances = np.zeros((n, n))
         
@@ -206,10 +224,11 @@ class PassengerCargoOptimizer:
                 if i != j:
                     loc_i = self.nodes[i].location
                     loc_j = self.nodes[j].location
-                    # 使用欧氏距离近似 (实际应使用Haversine公式)
+                    # 使用欧氏距离近似（适用于小范围区域）
+                    # 实际应用建议使用Haversine公式
                     distances[i][j] = np.sqrt(
                         (loc_i[0] - loc_j[0])**2 + (loc_i[1] - loc_j[1])**2
-                    ) * 111  # 转换为公里
+                    ) * 111  # 转换为公里（粗略近似）
         
         return distances
     
@@ -812,11 +831,16 @@ def main():
             print()
     
     # 总体统计
-    valid_routes = [r for r in optimized_routes if r.nodes]
+    valid_routes = PassengerCargoOptimizer.get_valid_routes(optimized_routes)
+    if not valid_routes:
+        print("警告：没有生成有效路线")
+        print("=" * 80)
+        return
+    
     total_cost = sum(route.total_cost for route in valid_routes)
     total_distance = sum(route.total_distance for route in valid_routes)
-    avg_passenger_sat = np.mean([optimizer.calculate_passenger_satisfaction(r) for r in valid_routes]) if valid_routes else 0.0
-    avg_cargo_sat = np.mean([optimizer.calculate_cargo_satisfaction(r) for r in valid_routes]) if valid_routes else 0.0
+    avg_passenger_sat = np.mean([optimizer.calculate_passenger_satisfaction(r) for r in valid_routes])
+    avg_cargo_sat = np.mean([optimizer.calculate_cargo_satisfaction(r) for r in valid_routes])
     
     print("=" * 80)
     print("总体统计:")

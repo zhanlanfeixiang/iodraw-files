@@ -210,14 +210,14 @@ def example_3_custom_scenario():
     print("总体评估：")
     print("-" * 80)
     
-    if not routes or all(not r.nodes for r in routes):
+    valid_routes = PassengerCargoOptimizer.get_valid_routes(routes)
+    if not valid_routes:
         print("  警告：未生成有效路线")
         print("\n" + "=" * 80 + "\n")
         return
     
-    total_cost = sum(r.total_cost for r in routes if r.nodes)
-    total_distance = sum(r.total_distance for r in routes if r.nodes)
-    valid_routes = [r for r in routes if r.nodes]
+    total_cost = sum(r.total_cost for r in valid_routes)
+    total_distance = sum(r.total_distance for r in valid_routes)
     avg_passenger_sat = sum(optimizer.calculate_passenger_satisfaction(r) for r in valid_routes) / len(valid_routes)
     avg_cargo_sat = sum(optimizer.calculate_cargo_satisfaction(r) for r in valid_routes) / len(valid_routes)
     overall_score = ai_engine.evaluate_coordination_score(avg_passenger_sat, avg_cargo_sat, 0.8)
@@ -256,7 +256,7 @@ def example_4_comparison():
     routes1 = optimizer1.optimize_with_ai_coordination(max_iterations=50)
     
     cost1 = sum(r.total_cost for r in routes1 if r.nodes)
-    valid_routes1 = [r for r in routes1 if r.nodes]
+    valid_routes1 = PassengerCargoOptimizer.get_valid_routes(routes1)
     passenger_sat1 = sum(optimizer1.calculate_passenger_satisfaction(r) for r in valid_routes1) / max(1, len(valid_routes1))
     cargo_sat1 = sum(optimizer1.calculate_cargo_satisfaction(r) for r in valid_routes1) / max(1, len(valid_routes1))
     
@@ -274,7 +274,7 @@ def example_4_comparison():
     routes2 = optimizer2.construct_initial_solution()  # 只用启发式算法
     
     cost2 = sum(r.total_cost for r in routes2 if r.nodes)
-    valid_routes2 = [r for r in routes2 if r.nodes]
+    valid_routes2 = PassengerCargoOptimizer.get_valid_routes(routes2)
     passenger_sat2 = sum(optimizer2.calculate_passenger_satisfaction(r) for r in valid_routes2) / max(1, len(valid_routes2))
     cargo_sat2 = sum(optimizer2.calculate_cargo_satisfaction(r) for r in valid_routes2) / max(1, len(valid_routes2))
     
