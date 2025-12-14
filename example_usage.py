@@ -174,6 +174,12 @@ def example_3_custom_scenario():
     print("\n开始优化...")
     routes = optimizer.optimize_with_ai_coordination(max_iterations=80)
     
+    # Check if valid routes exist
+    if not routes or all(not r.nodes for r in routes):
+        print("警告：未生成有效路线，问题可能太小或约束太严格")
+        print("\n" + "=" * 80 + "\n")
+        return
+    
     # 详细输出
     print("\n" + "-" * 80)
     print("详细路线方案：")
@@ -203,10 +209,17 @@ def example_3_custom_scenario():
     print("\n" + "-" * 80)
     print("总体评估：")
     print("-" * 80)
-    total_cost = sum(r.total_cost for r in routes)
-    total_distance = sum(r.total_distance for r in routes)
-    avg_passenger_sat = sum(optimizer.calculate_passenger_satisfaction(r) for r in routes) / len(routes)
-    avg_cargo_sat = sum(optimizer.calculate_cargo_satisfaction(r) for r in routes) / len(routes)
+    
+    if not routes or all(not r.nodes for r in routes):
+        print("  警告：未生成有效路线")
+        print("\n" + "=" * 80 + "\n")
+        return
+    
+    total_cost = sum(r.total_cost for r in routes if r.nodes)
+    total_distance = sum(r.total_distance for r in routes if r.nodes)
+    valid_routes = [r for r in routes if r.nodes]
+    avg_passenger_sat = sum(optimizer.calculate_passenger_satisfaction(r) for r in valid_routes) / len(valid_routes)
+    avg_cargo_sat = sum(optimizer.calculate_cargo_satisfaction(r) for r in valid_routes) / len(valid_routes)
     overall_score = ai_engine.evaluate_coordination_score(avg_passenger_sat, avg_cargo_sat, 0.8)
     
     print(f"  总运营成本: {total_cost:.2f} 元")
@@ -242,9 +255,10 @@ def example_4_comparison():
     optimizer1 = PassengerCargoOptimizer(nodes, vehicles, ai_engine1)
     routes1 = optimizer1.optimize_with_ai_coordination(max_iterations=50)
     
-    cost1 = sum(r.total_cost for r in routes1)
-    passenger_sat1 = sum(optimizer1.calculate_passenger_satisfaction(r) for r in routes1) / len(routes1)
-    cargo_sat1 = sum(optimizer1.calculate_cargo_satisfaction(r) for r in routes1) / len(routes1)
+    cost1 = sum(r.total_cost for r in routes1 if r.nodes)
+    valid_routes1 = [r for r in routes1 if r.nodes]
+    passenger_sat1 = sum(optimizer1.calculate_passenger_satisfaction(r) for r in valid_routes1) / max(1, len(valid_routes1))
+    cargo_sat1 = sum(optimizer1.calculate_cargo_satisfaction(r) for r in valid_routes1) / max(1, len(valid_routes1))
     
     print(f"  成本: {cost1:.2f} 元")
     print(f"  乘客满意度: {passenger_sat1:.2%}")
@@ -259,9 +273,10 @@ def example_4_comparison():
     optimizer2 = PassengerCargoOptimizer(nodes, vehicles, ai_engine2)
     routes2 = optimizer2.construct_initial_solution()  # 只用启发式算法
     
-    cost2 = sum(r.total_cost for r in routes2)
-    passenger_sat2 = sum(optimizer2.calculate_passenger_satisfaction(r) for r in routes2) / len(routes2)
-    cargo_sat2 = sum(optimizer2.calculate_cargo_satisfaction(r) for r in routes2) / len(routes2)
+    cost2 = sum(r.total_cost for r in routes2 if r.nodes)
+    valid_routes2 = [r for r in routes2 if r.nodes]
+    passenger_sat2 = sum(optimizer2.calculate_passenger_satisfaction(r) for r in valid_routes2) / max(1, len(valid_routes2))
+    cargo_sat2 = sum(optimizer2.calculate_cargo_satisfaction(r) for r in valid_routes2) / max(1, len(valid_routes2))
     
     print(f"  成本: {cost2:.2f} 元")
     print(f"  乘客满意度: {passenger_sat2:.2%}")

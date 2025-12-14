@@ -792,6 +792,13 @@ def main():
     # 输出结果
     print("5. 优化结果:")
     print()
+    
+    if not optimized_routes or all(not r.nodes for r in optimized_routes):
+        print("警告：未生成有效路线")
+        print("可能原因：节点数量太少、约束太严格或车辆容量不足")
+        print("=" * 80)
+        return
+    
     for route in optimized_routes:
         if route.nodes:
             vehicle = vehicles[route.vehicle_id]
@@ -805,10 +812,11 @@ def main():
             print()
     
     # 总体统计
-    total_cost = sum(route.total_cost for route in optimized_routes)
-    total_distance = sum(route.total_distance for route in optimized_routes)
-    avg_passenger_sat = np.mean([optimizer.calculate_passenger_satisfaction(r) for r in optimized_routes])
-    avg_cargo_sat = np.mean([optimizer.calculate_cargo_satisfaction(r) for r in optimized_routes])
+    valid_routes = [r for r in optimized_routes if r.nodes]
+    total_cost = sum(route.total_cost for route in valid_routes)
+    total_distance = sum(route.total_distance for route in valid_routes)
+    avg_passenger_sat = np.mean([optimizer.calculate_passenger_satisfaction(r) for r in valid_routes]) if valid_routes else 0.0
+    avg_cargo_sat = np.mean([optimizer.calculate_cargo_satisfaction(r) for r in valid_routes]) if valid_routes else 0.0
     
     print("=" * 80)
     print("总体统计:")
